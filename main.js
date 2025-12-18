@@ -1,6 +1,7 @@
 
 let TODOS = [];
 let DOM = {}//lets store dom references
+let ThreeChar = 3;
 
 const handleTaskDelete = (taskIdToDelete) => {
     if (!window.confirm("Are you sure you want to delete this task?")) { return }
@@ -29,6 +30,10 @@ const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
 
             taskTextPTag.setAttribute("contenteditable", "false");
             let updatedText = taskTextPTag.textContent.trim();
+            if (!updatedText) {
+                window.alert("enter task")
+                taskTextPTag.textContent = originalText;
+            }
             //arr changes
             TODOS = TODOS.map((taskElement) => taskElement.taskId === tasksIdToEdit ?
                 { ...taskElement, taskText: updatedText } : taskElement)
@@ -80,18 +85,68 @@ const handleSubmit = (e) => {
 
 const newTaskFunction = () => {
     //trim removes whitespace between start and end
+    const formatCurrDateTime = (ISOString) => {
+        const date = new Date(ISOString);//string to date obj
+        const currDateTime = new Date();
 
-    if (!DOM.taskInput.value.trim()) {
+
+        //create today date with time set to zero
+        //it helps while comparing dates 
+        const today = new Date(
+            currDateTime.getFullYear(),
+            currDateTime.getMonth(),
+            currDateTime.getDate(),
+
+        );
+
+        //create yesterday by copying todays date
+        const yesterday = new Date(today);
+
+        yesterday.setDate(today.getDate() - 1);
+
+        const dateMessage = new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+
+        )
+
+        const time = date.toLocaleTimeString([], {
+            hour: "numeric",//hour (1-12)
+            minute: "2-digit",
+            hour12: true,
+        })
+
+        if (dateMessage.getTime() === today.getTime()) {
+            return `Today,${time}`;
+        }
+
+        if (dateMessage.getTime() === yesterday.getTime()) {
+            return `Yesterday,${time}`;
+        }
+
+        const formattedDate = date.toLocaleDateString()//for old date,show full date with time
+
+        return `${formattedDate},${time}}`;
+
+
+
+
+    }
+
+
+    if (!DOM.taskInput.value.trim() || DOM.taskInput.value.trim().length === ThreeChar) {
         alert("enter something")
         return;
         //js comes out of function
     }
 
+
     const newTask = {
         taskId: Math.random(),
         taskText: DOM.taskInput.value.trim(),
         isTaskDone: false,
-        timeStamp: new Date(),
+        timeStamp: formatCurrDateTime(new Date().toISOString()),//converting timeStampe into isoString and passing as argument
     }
     console.log(newTask);
     createAndPushPtag(newTask);
@@ -135,7 +190,7 @@ function loadTodos() {//gets the string array from local storage ,then converts 
     const stringifiedTodos = localStorage.getItem("todos");
     const todosArray = JSON.parse(stringifiedTodos)
     if (todosArray && todosArray.length) {
-        TODOS = todosArray;//using spread operator, we are creating copy of todosArray
+        TODOS = todosArray;//using spread operator, we are creating Shallow copy of todosArray
         console.log(TODOS)
         return true
     }
@@ -185,7 +240,7 @@ const createAndPushPtag = (task) => {
     const editButton = document.createElement("button");
     editButton.textContent = "Edit";
 
-    editButton.addEventListener("click", (e) => handleTaskEdit(task.taskId, taskTextPTag, e))
+    editButton.addEventListener("click", () => handleTaskEdit(task.taskId, taskTextPTag))
 
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "delete";
@@ -199,7 +254,6 @@ const createAndPushPtag = (task) => {
     newListItem.appendChild(checkBoxInput)
 
     DOM.tasksContainer.prepend(newListItem)
-
 
     task.isTaskDone ? taskTextPTag.classList.add("task-done") : false
 
