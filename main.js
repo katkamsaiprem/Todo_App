@@ -1,12 +1,13 @@
 
 let TODOS = [];
-let DOM = {}//lets store dom references
+let DOM;//lets store dom references
 let ThreeChar = 3;
 
 const handleTaskDelete = (taskIdToDelete) => {
     if (!window.confirm("Are you sure you want to delete this task?")) { return }
     TODOS = TODOS.filter((task) => task.taskId != taskIdToDelete)
     saveTodosInLocalStorage(TODOS)
+    updateTaskCounts();
     const listITemToBeRemoved = document.getElementById(taskIdToDelete);
     listITemToBeRemoved.remove();
 
@@ -14,6 +15,9 @@ const handleTaskDelete = (taskIdToDelete) => {
 
 const updateTaskCounts = () => {
     const totaltasks = TODOS.length;
+    const completedTasks = TODOS.filter(todo => todo.isTaskDone).length;
+    DOM.totalCountElement ? DOM.totalCountElement.textContent = totaltasks : null;
+    DOM.completedCountElement ? DOM.completedCountElement.textContent = completedTasks : null;
 
 }
 const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
@@ -45,6 +49,7 @@ const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
 
 
             saveTodosInLocalStorage(TODOS);
+            updateTaskCounts();
 
 
             taskTextPTag.removeEventListener("keydown", handleKeydown);// remove event listeners after usage to avoid memory leaks
@@ -72,6 +77,7 @@ const handlerClearDoneTasks = () => {
 
         DOM.tasksContainer.innerHTML = "";
         renderTodos(TODOS)
+        updateTaskCounts();
     }
 }
 
@@ -160,10 +166,10 @@ const newTaskFunction = () => {
         isTaskDone: false,
         timeStamp: formatCurrDateTime(new Date().toISOString()),//converting timeStampe into isoString and passing as argument
     }
-    console.log(newTask);
     createAndPushPtag(newTask);
     TODOS.push(newTask)
-    console.log(TODOS);
+    updateTaskCounts();
+
 
 }
 
@@ -176,15 +182,19 @@ const handleTaskDone = (taskIdToUpdateIsTaskDone, taskTextPTag) => {
         }
         saveTodosInLocalStorage(TODOS)
     }
+    updateTaskCounts();
 
 }
 const initDOM = () => {
+    DOM = {};
     //----------DOM nodes---------
     DOM.taskform = document.querySelector(".taskform")
     DOM.taskInput = document.querySelector(".taskInput")
     DOM.ddTaskBtn = document.querySelector(".taskBtn")
     DOM.tasksContainer = document.querySelector(".tasksContainer")
     DOM.clearButton = document.querySelector(".clear-button")
+    DOM.totalCountElement = document.getElementById("total-count");
+    DOM.completedCountElement = document.getElementById("completed-count")
 
 }
 
@@ -198,12 +208,11 @@ const saveTodosInLocalStorage = (todos) => {
 
 
 function loadTodos() {//gets the string array from local storage ,then converts into orignal data form , if array contains data then create copy of it then push to TODOS
-    console.log(TODOS);
     const stringifiedTodos = localStorage.getItem("todos");
     const todosArray = JSON.parse(stringifiedTodos)
     if (todosArray && todosArray.length) {
         TODOS = todosArray;//using spread operator, we are creating Shallow copy of todosArray
-        console.log(TODOS)
+
         return true
     }
     return false
@@ -216,7 +225,6 @@ const renderTodos = (todos) => {
 }
 
 const createAndPushPtag = (task) => {
-    console.log(task);
 
 
     const newListItem = document.createElement("li");
@@ -227,10 +235,8 @@ const createAndPushPtag = (task) => {
     checkBoxInput.setAttribute("type", "checkbox");
     checkBoxInput.addEventListener("change", () => handleTaskDone(task.taskId, taskTextPTag))
 
-    console.log(`before checked ${checkBoxInput.checked}`);
 
     checkBoxInput.checked = task.isTaskDone;
-    console.log(`after checked ${checkBoxInput.checked}`);
 
 
 
@@ -283,7 +289,7 @@ document.addEventListener("DOMContentLoaded", function initApp() {//executes whe
     const areTodosLoaded = loadTodos()
     areTodosLoaded && renderTodos(TODOS)//shorthand code for if condition
 
-
+    updateTaskCounts();
 
 })
 
