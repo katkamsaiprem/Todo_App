@@ -1,7 +1,7 @@
-
 let TODOS = [];
 let DOM;//lets store dom references
 let ThreeChar = 3;
+let sorting;
 
 const handleTaskDelete = (taskIdToDelete) => {
     if (!window.confirm("Are you sure you want to delete this task?")) { return }
@@ -10,6 +10,33 @@ const handleTaskDelete = (taskIdToDelete) => {
     updateTaskCounts();
     const listITemToBeRemoved = document.getElementById(taskIdToDelete);
     listITemToBeRemoved.remove();
+
+}
+const handleSorting = (e) => {
+    const sortType = e.target.value;
+
+    if (sortType === sorting.newestFirst) {
+        TODOS.sort((a, b) => b.createdAt - a.createdAt);
+    }
+    else if (sortType === sorting.oldestFirst) {
+        TODOS.sort((a, b) => a.createdAt - b.createdAt);
+    }
+    else if (sortType === sorting.completedLast) {
+        TODOS.sort((a, b) => {
+            if (a.isTaskDone === b.isTaskDone) return 0;// 0 means no change in order
+            return a.isTaskDone ? 1 : -1;
+            // if a is done,then move it after b
+            // if a is not done,then move it before b
+            //all incomplete tasks appear first all completed tasks appear last
+        });
+    }
+
+    saveTodosInLocalStorage(TODOS);
+    DOM.tasksContainer.innerHTML = "";
+    renderTodos(TODOS);
+    updateTaskCounts()
+
+
 
 }
 
@@ -171,6 +198,7 @@ const newTaskFunction = () => {
         taskText: DOM.taskInput.value.trim(),
         isTaskDone: false,
         timeStamp: formatCurrDateTime(new Date().toISOString()),//converting timeStampe into isoString and passing as argument
+        createdAt: Date.now(),//we need new timestamp because existing timestamp is sorted
     }
     createAndPushPtag(newTask);
     TODOS.push(newTask)
@@ -201,6 +229,7 @@ const initDOM = () => {
     DOM.clearButton = document.querySelector(".clear-button")
     DOM.totalCountElement = document.getElementById("total-count");
     DOM.completedCountElement = document.getElementById("completed-count")
+    DOM.sortingSelecteElement = document.getElementById("sorting");
 
 }
 
@@ -239,6 +268,7 @@ const createAndPushPtag = (task) => {
 
     const checkBoxInput = document.createElement("input");
     checkBoxInput.setAttribute("type", "checkbox");
+    checkBoxInput.classList.add("checkbox")
     checkBoxInput.addEventListener("change", () => handleTaskDone(task.taskId, taskTextPTag))
 
 
@@ -260,14 +290,20 @@ const createAndPushPtag = (task) => {
     taskContentContainer.appendChild(timeStampPTag);
 
     const taskActionButtonContainer = document.createElement("div")
+    taskActionButtonContainer.classList.add("taskActionButtonContainer")
 
     const editButton = document.createElement("button");
+    editButton.classList.add("taskBtn");
+    editButton.classList.add("editBtn")
     editButton.textContent = "Edit";
 
     editButton.addEventListener("click", () => handleTaskEdit(task.taskId, taskTextPTag))
 
     const deleteButton = document.createElement("button");
-    deleteButton.textContent = "delete";
+    deleteButton.textContent = "Delete";
+    deleteButton.classList.add("taskBtn");
+    deleteButton.classList.add("deleteBtn");
+
     deleteButton.addEventListener("click", () => handleTaskDelete(task.taskId))
 
     taskActionButtonContainer.appendChild(editButton);
@@ -290,8 +326,15 @@ document.addEventListener("DOMContentLoaded", function initApp() {//executes whe
 
     initDOM();
 
+    sorting = {
+        newestFirst: "NewestFirst",
+        oldestFirst: "OldestFirst",
+        completedLast: "CompletedLast"
+    }
+
     DOM.taskform.addEventListener("submit", handleSubmit)
     DOM.clearButton.addEventListener("click", handlerClearDoneTasks)
+    DOM.sortingSelecteElement.addEventListener("change", (e) => handleSorting(e))
 
 
     const areTodosLoaded = loadTodos()

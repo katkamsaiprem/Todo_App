@@ -5,7 +5,9 @@
     box-sizing: border-box;
 }
 
-
+:root{
+    --btn-color:rgb(101, 72, 130);
+}
 body{
     background-color: #e5eaee;
     background-image: repeating-linear-gradient(90deg, #f0f0f0 0 1px, #0000 1px 40px), repeating-linear-gradient(#f0f0f0 0 1px, #0000 1px 40px);
@@ -39,7 +41,7 @@ li{
     gap: 2px;
 }
 .taskBtn{
-    background-color: rebeccapurple;
+    background-color: var(--btn-color);
     color: white;
     border: none;
     padding: 12px;
@@ -60,6 +62,7 @@ li{
 }
 .input-add{
     display: flex;
+    justify-content: center;
 }
 .tasksContainer{
     display: flex;
@@ -70,8 +73,13 @@ li{
     flex-wrap: wrap;
 }
 .taskItem{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     border: 2px solid rebeccapurple;
-    padding: 2px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius:10px;
 }
 .task-done{
      text-decoration:line-through;
@@ -82,7 +90,7 @@ li{
     color: red;
 }
 #heading{
-    padding-left: 30px;
+    padding-left: 80px;
     padding-bottom: 10px;
 
 }
@@ -103,4 +111,34 @@ li{
 .task-counter strong {
     color: #333;
     font-weight: 600;
+}
+.clear-button{
+    background-color: var(--btn-color);
+    border-radius: 20px;
+}
+.filterBtn{
+    border-radius: 18px;
+    background-color: var(--btn-color);
+
+}
+.taskActionButtonContainer{
+    display: flex;
+    gap: 10px;
+    justify-content: space-around;
+}
+.checkbox{
+    width: 10px;
+}
+.editBtn{
+    padding: 5px;
+    border-radius: 10px;
+    background-color: var(--btn-color);
+    padding-left: 7px;
+    padding-right: 9px;
+
+}
+.deleteBtn{
+    padding: 8px;
+    border-radius: 10px;
+    background-color: var(--btn-color);
 }

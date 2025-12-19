@@ -14,17 +14,26 @@
     <div class="container">
 
         <form class="taskform">
-            <h1 id="heading">My Tasks</h1>
+            <h1 id="heading">Just do it..</h1>
             <div class="input-add">
                 <input class="taskInput no-placeholder-style" type="text" id="task" placeholder="Enter Today's Task">
-                <button class="taskBtn" type="submit">add</button>
+                <button class="taskBtn" type="submit">Add</button>
 
             </div>
             <div class="task-counter">
                 <span>Total Tasks: <strong id="total-count">0</strong></span>
-                <span>Completed: <strong id="completed-count">0</strong></span>
+                <span>Completed Tasks: <strong id="completed-count">0</strong></span>
             </div>
-            <button type="button" class="clear-button">Clear Completed</button>
+            <div class="clear-filter-btn">
+                <button type="button" class="taskBtn clear-button">Clear Completed Tasks</button>
+                <select id="sorting" class="taskBtn filterBtn">
+                    <option value="Filter">Filter</option>
+                    <option value="NewestFirst">Newest Tasks</option>
+                    <option value="OldestFirst">Oldest Tasks</option>
+                    <option value="CompletedLast">Completed Tasks</option>
+                </select>
+            </div>
+
 
 
 
