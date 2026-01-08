@@ -169,3 +169,12 @@ TODOS.sort((a, b) => {
 [1, 10, 2].sort((a,b) => a-b)  // Result: [1, 2, 10] ✓ (numeric)
 ```
 -------------------------------------------------------------------------------------------------
+
+
+-----------------AppWriter------------------------------
+shift the data from localStorage to appWriter db
+ CRUD
+ C -- ✔️
+ R -- get data from appWriteDB and update arr
+ U -- 
+ D --

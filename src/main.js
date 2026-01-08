@@ -205,23 +205,23 @@ const newTaskFunction = async () => {
     timeStamp: formatCurrDateTime(new Date().toISOString()),//converting timeStampe into isoString and passing as argument
     createdAt: Date.now(),//we need new timestamp because existing timestamp is sorted
   }
-  const client = new Client()
-    .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
-    .setProject('695cd776000c67f22dd2'); // Your project ID
+  // const client = new Client()
+  //   .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
+  //   .setProject('695cd776000c67f22dd2'); // Your project ID
 
-  const tablesDB = new TablesDB(client);
+  // const tablesDB = new TablesDB(client);
 
-  const result = await tablesDB.createRow({
-    databaseId: '695e3add0000ece1e383',
-    tableId: 'taskstable',
-    rowId: ID.unique(),
-    data: {
-      "taskText": newTask.taskText,
-    },
+  // const result = await tablesDB.createRow({
+  //   databaseId: '695e3add0000ece1e383',
+  //   tableId: 'taskstable',
+  //   rowId: ID.unique(),
+  //   data: {
+  //     "taskText": newTask.taskText,
+  //   },
 
-  });
+  // });
 
-  console.log(result);
+  saveTodosInAppWriteDB(newTask);
   createAndPushPtag(newTask);
   TODOS.push(newTask)
   updateTaskCounts();
@@ -257,22 +257,60 @@ const initDOM = () => {
 
 
 
-const saveTodosInLocalStorage = (todos) => {
-  const stringifiedTodos = JSON.stringify(todos);
-  localStorage.setItem("todos", stringifiedTodos);
-  return;
+const saveTodosInAppWriteDB = async (newTask) => {
+  // const stringifiedTodos = JSON.stringify(todos);
+  // localStorage.setItem("todos", stringifiedTodos);
+  const client = new Client()
+    .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
+    .setProject('695cd776000c67f22dd2'); // Your project ID
+
+  const tablesDB = new TablesDB(client);
+
+  const result = await tablesDB.createRow({
+    databaseId: '695e3add0000ece1e383',
+    tableId: 'taskstable',
+    rowId: ID.unique(),
+    data: {
+      "taskText": newTask.taskText,
+    },
+
+  });
+  console.log(result);
+  console.log("row Saved to AppWriteDB");
+
+
+
 }
 
 
-function loadTodos() {//gets the string array from local storage ,then converts into orignal data form , if array contains data then create copy of it then push to TODOS
-  const stringifiedTodos = localStorage.getItem("todos");
-  const todosArray = JSON.parse(stringifiedTodos)
-  if (todosArray && todosArray.length) {
-    TODOS = todosArray;//using spread operator, we are creating Shallow copy of todosArray
+async function loadTodos() {//gets the string array from local storage ,then converts into orignal data form , if array contains data then create copy of it then push to TODOS
+  // const stringifiedTodos = localStorage.getItem("todos");
+  // const todosArray = JSON.parse(stringifiedTodos)
+  // if (todosArray && todosArray.length) {
+  //   TODOS = todosArray;//using spread operator, we are creating Shallow copy of todosArray
 
-    return true
-  }
-  return false
+  //   return true
+  // }
+  // return false
+
+
+  const client = new Client()
+    .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
+    .setProject('695cd776000c67f22dd2'); // Your project ID
+
+  const tablesDB = new TablesDB(client);
+
+  const result = await tablesDB.listRows({
+    databaseId: '695e3add0000ece1e383',
+    tableId: 'taskstable',
+
+  });
+
+  console.log(result);
+  console.log("rows from table loaded");
+
+
+
 }
 
 const renderTodos = (todos) => {
@@ -342,7 +380,7 @@ const createAndPushPtag = (task) => {
 
 }
 
-document.addEventListener("DOMContentLoaded", function initApp() {//executes when browser renders the html, this event will trigger after js runs
+document.addEventListener("DOMContentLoaded", async function initApp() {//executes when browser renders the html, this event will trigger after js runs
 
 
 
@@ -360,7 +398,7 @@ document.addEventListener("DOMContentLoaded", function initApp() {//executes whe
   DOM.sortingSelecteElement.addEventListener("change", (e) => handleSorting(e))
 
 
-  const areTodosLoaded = loadTodos()
+  const areTodosLoaded = await loadTodos()
   areTodosLoaded && renderTodos(TODOS)//shorthand code for if condition
 
   updateTaskCounts();
