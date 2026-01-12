@@ -23,7 +23,7 @@ const handleTaskDelete = async (taskIdToDelete) => {
   try {
     await DeleteTaskFromDB(taskIdToDelete)
     TODOS = TODOS.filter((task) => task.$id !== taskIdToDelete)
-    saveTodosInAppWriteDB(TODOS)
+
     updateTaskCounts();
 
     listITemToBeRemoved.remove();
@@ -79,7 +79,7 @@ const handleSorting = (e) => {
       //all incomplete tasks appear first all completed tasks appear last
     });
   }
-  saveTodosInAppWriteDB(TODOS);
+
   DOM.tasksContainer.innerHTML = "";
   renderTodos(TODOS);
   updateTaskCounts()
@@ -106,24 +106,41 @@ const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
 
 
 
-  const handleKeydown = (e) => {
+  const handleKeydown = async (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
 
 
       taskTextPTag.setAttribute("contenteditable", "false");
       let updatedText = taskTextPTag.textContent.trim();
+
       if (!updatedText) {
         window.alert("enter task")
         taskTextPTag.textContent = originalText;
+        taskTextPTag.removeEventListener("keydown", handleKeydown);
+        return;
       }
-      //arr changes
+
+      //update local array
       TODOS = TODOS.map((taskElement) => taskElement.$id === tasksIdToEdit ?
         { ...taskElement, taskText: updatedText } : taskElement)
 
+      try {//update in appWriterDB
+        await updateTaskInDB(tasksIdToEdit, {
+          taskText: updatedText
+        })
+      }
+      catch (error) {
+        console.error("Failed to update task text:", error)
+
+        //update original Text
+        taskTextPTag.textContent = originalText;
+        TODOS = TODOS.map((taskElement) => taskElement.$id === tasksIdToEdit ?
+          { ...taskElement, taskText: originalText } : taskElement)
+
+      }
 
 
-      saveTodosInAppWriteDB(TODOS);
       updateTaskCounts();
 
 
@@ -132,7 +149,7 @@ const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
 
       // taskTextPTag.setAttribute("style", "filter: blur(0.5px)")
     }
-    if (e.key == "Escape") {
+    if (e.key === "Escape") {
       e.preventDefault();
       taskTextPTag.textContent = originalText;
       taskTextPTag.setAttribute("contenteditable", "false");
@@ -145,16 +162,38 @@ const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
 
 }
 
-const handlerClearDoneTasks = () => {
+const handlerClearDoneTasks = async () => {
+
+  const completedTasks = TODOS.filter(task => task.isTaskDone === true);
+
+  try {
+    //delete all completedTasks from AppWriterDB
+    //converts array of task obj to arr of promises
+    //resolves only when every promise successfull
+    //promise.all waits for all delete operations to complete
+    await Promise.all(
+      completedTasks.map(task => DeleteTaskFromDB(task.$id))
+    )
+
+
+    //local update
+    TODOS = TODOS.filter((taskElement) => taskElement.isTaskDone === false)
 
 
 
-  TODOS = TODOS.filter((taskElement) => taskElement.isTaskDone === false)
-  saveTodosInAppWriteDB(TODOS)
+    DOM.tasksContainer.innerHTML = "";
+    renderTodos(TODOS)
+    updateTaskCounts();
 
-  DOM.tasksContainer.innerHTML = "";
-  renderTodos(TODOS)
-  updateTaskCounts();
+
+  }
+  catch (error) {
+    console.error("Failed to clear completed tasks ", error);
+
+  }
+
+
+
 
 
 }
@@ -167,7 +206,7 @@ const handleSubmit = (e) => {
 
 
 
-  saveTodosInAppWriteDB(TODOS)
+
 
   DOM.taskInput.value = "";
   DOM.taskInput.focus();
@@ -211,14 +250,26 @@ const newTaskFunction = async () => {
 
 }
 
-const handleTaskDone = (taskIdToUpdateIsTaskDone, taskTextPTag) => {
+const handleTaskDone = async (taskIdToUpdateIsTaskDone, taskTextPTag) => {
   for (let index = 0; index < TODOS.length; index++) {
     if (TODOS[index].$id === taskIdToUpdateIsTaskDone) {
       TODOS[index].isTaskDone = !TODOS[index].isTaskDone;
       TODOS[index].isTaskDone ? taskTextPTag.classList.add("task-done") : taskTextPTag.classList.remove("task-done");
 
+      //update in AppWriterDB
+      try {
+        await updateTaskInDB(taskIdToUpdateIsTaskDone, {
+          isTaskDone: TODOS[index].isTaskDone,
+        })
+
+      }
+      catch (error) {
+        console.error("Failed to update task status:", error);
+
+      }
+      break;
     }
-    saveTodosInAppWriteDB(TODOS)
+
   }
   updateTaskCounts();
 
@@ -386,21 +437,20 @@ const RetriveTodosFromDB = async () => {//gets the string array from local stora
 
 }
 
-const saveTodosInAppWriteDB = async (TODOS) => {
+const updateTaskInDB = async (taskId, updateData) => {
 
   const client = new Client()
-    .setEndpoint('https://<REGION>.cloud.appwrite.io/v1') // Your API Endpoint
-    .setProject('<YOUR_PROJECT_ID>'); // Your project ID
+    .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
+    .setProject('695cd776000c67f22dd2'); // Your project ID
 
   const tablesDB = new TablesDB(client);
 
   const result = await tablesDB.updateRow({
-    databaseId: '<DATABASE_ID>',
-    tableId: '<TABLE_ID>',
-    rowId: '<ROW_ID>',
-    data: {}, // optional
-    permissions: [Permission.read(Role.any())], // optional
-    transactionId: '<TRANSACTION_ID>' // optional
+    databaseId: '695e3add0000ece1e383',
+    tableId: 'taskstable',
+    rowId: taskId,
+    data: updateData,
+
   });
 
   console.log(result);
